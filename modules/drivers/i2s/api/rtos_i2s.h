@@ -323,6 +323,19 @@ void rtos_i2s_master_init(
         port_t p_mclk,
         xclock_t bclk);
 
+
+void rtos_i2s2_master_init(
+        rtos_i2s_t *i2s_ctx,
+        uint32_t io_core_mask,
+        port_t p_dout[],
+        size_t num_out,
+        port_t p_din[],
+        size_t num_in,
+        port_t p_bclk,
+        port_t p_lrclk,
+        port_t p_mclk,
+        xclock_t bclk);
+
 /**
  * Initializes an RTOS I2S driver instance in master mode but that uses an externally
  * generated bit clock.

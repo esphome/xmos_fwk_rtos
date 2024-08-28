@@ -36,6 +36,11 @@ void rtos_i2s_rpc_client_init(
         rtos_driver_rpc_t *rpc_config,
         rtos_intertile_t *host_intertile_ctx);
 
+void rtos_i2s2_rpc_client_init(
+        rtos_i2s_t *i2s_ctx,
+        rtos_driver_rpc_t *rpc_config,
+        rtos_intertile_t *host_intertile_ctx);
+
 /**
  * Performs additional initialization on a I2S driver instance to
  * allow client tiles to use the I2S driver instance. Each client
@@ -52,6 +57,12 @@ void rtos_i2s_rpc_client_init(
  * \param remote_client_count  The number of client tiles to share this driver instance with.
  */
 void rtos_i2s_rpc_host_init(
+        rtos_i2s_t *i2s_ctx,
+        rtos_driver_rpc_t *rpc_config,
+        rtos_intertile_t *client_intertile_ctx[],
+        size_t remote_client_count);
+
+void rtos_i2s2_rpc_host_init(
         rtos_i2s_t *i2s_ctx,
         rtos_driver_rpc_t *rpc_config,
         rtos_intertile_t *client_intertile_ctx[],

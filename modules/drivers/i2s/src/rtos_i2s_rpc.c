@@ -225,6 +225,27 @@ void rtos_i2s_rpc_client_init(
     i2s_ctx->num_in = s_chan_in_word(host_intertile_ctx->c);
 }
 
+void rtos_i2s2_rpc_client_init(
+        rtos_i2s_t *i2s_ctx,
+        rtos_driver_rpc_t *rpc_config,
+        rtos_intertile_t *host_intertile_ctx)
+{
+    i2s_ctx->rpc_config = rpc_config;
+    i2s_ctx->rx = i2s_remote_rx;
+    i2s_ctx->tx = i2s_remote_tx;
+    rpc_config->rpc_host_start = NULL;
+    rpc_config->remote_client_count = 0;
+    rpc_config->host_task_priority = -1;
+
+    /* This must be configured later with rtos_i2s_rpc_config() */
+    rpc_config->host_address.port = -1;
+
+    rpc_config->host_address.intertile_ctx = host_intertile_ctx;
+    rpc_config->host_ctx_ptr = (void *) s_chan_in_word(host_intertile_ctx->c);
+    i2s_ctx->num_out = s_chan_in_word(host_intertile_ctx->c);
+    i2s_ctx->num_in = s_chan_in_word(host_intertile_ctx->c);
+}
+
 void rtos_i2s_rpc_host_init(
         rtos_i2s_t *i2s_ctx,
         rtos_driver_rpc_t *rpc_config,
@@ -233,6 +254,30 @@ void rtos_i2s_rpc_host_init(
 {
     xassert(i2s_ctx->is_slave == false);
 
+    i2s_ctx->rpc_config = rpc_config;
+    rpc_config->rpc_host_start = i2s_rpc_start;
+    rpc_config->remote_client_count = remote_client_count;
+
+    /* This must be configured later with rtos_i2s_rpc_config() */
+    rpc_config->host_task_priority = -1;
+
+    for (int i = 0; i < remote_client_count; i++) {
+        rpc_config->client_address[i].intertile_ctx = client_intertile_ctx[i];
+        s_chan_out_word(client_intertile_ctx[i]->c, (uint32_t) i2s_ctx);
+        s_chan_out_word(client_intertile_ctx[i]->c, (uint32_t) i2s_ctx->num_out);
+        s_chan_out_word(client_intertile_ctx[i]->c, (uint32_t) i2s_ctx->num_in);
+
+        /* This must be configured later with rtos_i2s_rpc_config() */
+        rpc_config->client_address[i].port = -1;
+    }
+}
+
+void rtos_i2s2_rpc_host_init(
+        rtos_i2s_t *i2s_ctx,
+        rtos_driver_rpc_t *rpc_config,
+        rtos_intertile_t *client_intertile_ctx[],
+        size_t remote_client_count)
+{
     i2s_ctx->rpc_config = rpc_config;
     rpc_config->rpc_host_start = i2s_rpc_start;
     rpc_config->remote_client_count = remote_client_count;

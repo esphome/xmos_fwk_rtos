@@ -153,9 +153,36 @@ static void i2s_master_thread(rtos_i2s_t *ctx)
 
     (void) s_chan_in_byte(ctx->c_i2s_isr.end_a);
 
-    rtos_printf("I2S on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
+    printf(" >>>>> I2S1 on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
+    // rtos_printf("I2S on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
     i2s_master(
                &i2s_cbg,
+               ctx->p_dout,
+               ctx->num_out,
+               ctx->p_din,
+               ctx->num_in,
+               ctx->p_bclk,
+               ctx->p_lrclk,
+               ctx->p_mclk,
+               ctx->bclk);
+}
+
+static void i2s2_master_thread(rtos_i2s_t *ctx)
+{
+    i2s_callback_group_t i2s2_cbg = {
+            (i2s_init_t) i2s_init,
+            (i2s_restart_check_t) i2s_restart_check,
+            (i2s_receive_t) i2s_receive,
+            (i2s_send_t) i2s_send,
+            ctx
+    };
+
+    (void) s_chan_in_byte(ctx->c_i2s_isr.end_a);
+
+    printf(" >>>>> I2S2 on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
+    // rtos_printf("I2S on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
+    i2s_master(
+               &i2s2_cbg,
                ctx->p_dout,
                ctx->num_out,
                ctx->p_din,
@@ -333,6 +360,8 @@ void rtos_i2s_start(
     i2s_ctx->mode = mode;
     i2s_ctx->isr_cmd = 0;
 
+    printf(" >>>>> rtos_i2s_start on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
+
     memset(&i2s_ctx->recv_buffer, 0, sizeof(i2s_ctx->send_buffer));
     if (i2s_ctx->num_in > 0) {
         i2s_ctx->recv_buffer.buf_size = recv_buffer_size * (2 * i2s_ctx->num_in);
@@ -355,6 +384,7 @@ void rtos_i2s_start(
 
     /* Tells the task running the I2S I/O to start */
     s_chan_out_byte(i2s_ctx->c_i2s_isr.end_b, 0);
+    printf(" >>>>> rtos_i2s_start end on tile %d core %d\n", THIS_XCORE_TILE, rtos_core_id_get());
 
     /* Restore the core exclusion map for the calling thread */
     rtos_osal_thread_core_exclusion_set(NULL, core_exclude_map);
@@ -441,6 +471,42 @@ void rtos_i2s_master_init(
                   bclk,
                   (rtos_osal_entry_function_t) i2s_master_thread,
                   RTOS_THREAD_STACK_SIZE(i2s_master_thread));
+}
+
+void rtos_i2s2_master_init(
+        rtos_i2s_t *i2s_ctx,
+        uint32_t io_core_mask,
+        port_t p_dout[],
+        size_t num_out,
+        port_t p_din[],
+        size_t num_in,
+        port_t p_bclk,
+        port_t p_lrclk,
+        port_t p_mclk,
+        xclock_t bclk)
+{
+    
+//    port_enable(PORT_MCLK_IN);
+//    clock_enable(I2S2_CLKBLK);
+//    clock_set_source_port(I2S2_CLKBLK, PORT_MCLK_IN);
+//    port_set_clock(PORT_MCLK_IN, I2S2_CLKBLK);
+//    clock_start(I2S2_CLKBLK);
+//
+
+    port_enable(p_mclk);
+
+    rtos_i2s_init(i2s_ctx,
+                  io_core_mask,
+                  p_dout,
+                  num_out,
+                  p_din,
+                  num_in,
+                  p_bclk,
+                  p_lrclk,
+                  p_mclk,
+                  bclk,
+                  (rtos_osal_entry_function_t) i2s2_master_thread,
+                  RTOS_THREAD_STACK_SIZE(i2s2_master_thread));
 }
 
 void rtos_i2s_master_ext_clock_init(
